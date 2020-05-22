@@ -26,27 +26,27 @@ The compiler will print the following to stderr:
 
 Here are the kinds of issues that Pedantic Mode will find:
 
--   Distribution arguments don't match the distribution specification. [Details](#org1022877).
--   Some specific distribution is used in an inadvisable way. [Details](#org76f6782).
--   Very large or very small constants are used as distribution arguments. [Details](#org80f3ed7).
--   Branching control flow (like if/else) depends on a parameter value. [Details](#org5d5eb29).
--   A parameter is defined but doesn't contribute to target. [Details](#org9d08cd0).
--   A parameter is on the left-hand side of multiple twiddles. [Details](#orgfde22de).
--   A parameter has more than one prior distribution. [Details](#orgc19ae8e).
--   A parameter is given questionable bounds. [Details](#org67085ac).
--   A variable is used before being assigned a value. [Details](#orgc242be3).
+-   Distribution arguments don't match the distribution specification. [Details here](#orgc285e76).
+-   Some specific distribution is used in an inadvisable way. [Details here](#orgf3d481f).
+-   Very large or very small constants are used as distribution arguments. [Details here](#org9fcbf35).
+-   Branching control flow (like if/else) depends on a parameter value. [Details here](#org46788c6).
+-   A parameter is defined but doesn't contribute to target. [Details here](#org2d4cffd).
+-   A parameter is on the left-hand side of multiple twiddles. [Details here](#org0dba442).
+-   A parameter has more than one prior distribution. [Details here](#org40844ed).
+-   A parameter is given questionable bounds. [Details here](#org29cf51b).
+-   A variable is used before being assigned a value. [Details here](#orgf336341).
 
-For a current list of pedantic mode's limitations; see [here](#orga38fd10).
+For a current list of pedantic mode's limitations, see [here](#orgcd45eef).
 
 
 ## Warning documentation
 
 
-### [Updated] Distribution warnings
+### Distribution warnings
 
 1.  Argument and variate constraint warnings
 
-    <a id="org1022877"></a>
+    <a id="orgc285e76"></a>
      There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
     
     An exception is discrete distributions. I can't yet check the bounds of discrete variables or data variables. That'll be a future update.
@@ -67,7 +67,7 @@ For a current list of pedantic mode's limitations; see [here](#orga38fd10).
 
 2.  Special distribution warnings
 
-    <a id="org76f6782"></a>
+    <a id="orgf3d481f"></a>
     
     1.  Uniform distribution
     
@@ -82,16 +82,16 @@ For a current list of pedantic mode's limitations; see [here](#orga38fd10).
         Warn on use to suggest using Cholesky variant
 
 
-### [Updated] Parameter defined but never used
+### Parameter defined but never used
 
-<a id="org9d08cd0"></a>
+<a id="org2d4cffd"></a>
 I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
 
 
-### [Updated] Large or small numbers
+### Large or small numbers
 
-<a id="org80f3ed7"></a>
-Update: Only checking numbers which are used as arguments to built-in distributions.
+<a id="org9fcbf35"></a>
+Only checking numbers which are used as arguments to built-in distributions.
 
 1.  Description
 
@@ -107,7 +107,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
 
 ### Control flow dependent on parameters
 
-<a id="org5d5eb29"></a>
+<a id="org46788c6"></a>
 
 1.  Description
 
@@ -120,7 +120,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
 
 ### Parameter on LHS of multiple twiddles
 
-<a id="orgfde22de"></a>
+<a id="org0dba442"></a>
 
 1.  Implemenation notes
 
@@ -133,7 +133,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
 
 ### Parameter with /=1 priors
 
-<a id="orgc19ae8e"></a>
+<a id="org40844ed"></a>
 
 1.  Description
 
@@ -152,7 +152,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
 
 ### Undefined variables
 
-<a id="orgc242be3"></a>
+<a id="orgf336341"></a>
 
 1.  Implemenation notes
 
@@ -163,7 +163,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
 
 ### Parameter bounds
 
- <a id="org67085ac"></a>
+ <a id="org29cf51b"></a>
  NOTE: also nonsense bounds
 Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases except A=0, B=1 and A=-1, B=1.
 
@@ -174,7 +174,7 @@ Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases e
 
 ## Limitations
 
-<a id="orga38fd10"></a>
+<a id="orgcd45eef"></a>
 
 
 ### Handle array elements in dependency analysis

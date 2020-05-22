@@ -1,7 +1,7 @@
 # #+OPTIONS: ^:nil
 #+OPTIONS: toc:nil
 #+OPTIONS: num:t
-#+OPTIONS: H:3
+#+OPTIONS: H:5
 
    Pedantic Mode is a compilation option built into Stanc3 that warns you about potential issues in your Stan program.
 
@@ -14,20 +14,20 @@
  #+INCLUDE: "ped-mode-ex1.warnings" src
 
  Here are the kinds of issues that Pedantic Mode will find:
-  * Distribution arguments don't match the distribution specification. [[sec:dist-args][Details]].
-  * Some specific distribution is used in an inadvisable way. [[sec:special-dist][Details]].
-  * Very large or very small constants are used as distribution arguments. [[sec:scaling][Details]].
-  * Branching control flow (like if/else) depends on a parameter value. [[sec:param-cf][Details]].
-  * A parameter is defined but doesn't contribute to target. [[sec:unused][Details]].
-  * A parameter is on the left-hand side of multiple twiddles. [[sec:twiddles][Details]].
-  * A parameter has more than one prior distribution. [[sec:priors][Details]].
-  * A parameter is given questionable bounds. [[sec:bounds][Details]].
-  * A variable is used before being assigned a value. [[sec:uninit][Details]].
+  * Distribution arguments don't match the distribution specification. [[sec:dist-args][Details here]].
+  * Some specific distribution is used in an inadvisable way. [[sec:special-dist][Details here]].
+  * Very large or very small constants are used as distribution arguments. [[sec:scaling][Details here]].
+  * Branching control flow (like if/else) depends on a parameter value. [[sec:param-cf][Details here]].
+  * A parameter is defined but doesn't contribute to target. [[sec:unused][Details here]].
+  * A parameter is on the left-hand side of multiple twiddles. [[sec:twiddles][Details here]].
+  * A parameter has more than one prior distribution. [[sec:priors][Details here]].
+  * A parameter is given questionable bounds. [[sec:bounds][Details here]].
+  * A variable is used before being assigned a value. [[sec:uninit][Details here]].
    
  For a current list of pedantic mode's limitations, see [[sec:limitations][here]].
 
 ** Warning documentation
-*** [Updated] Distribution warnings
+*** Distribution warnings
 **** Argument and variate constraint warnings
     <<sec:dist-args>>
      There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
@@ -59,12 +59,12 @@
 ***** lkj_corr distribution
       Warn on use to suggest using Cholesky variant
     
-*** [Updated] Parameter defined but never used
+*** Parameter defined but never used
     <<sec:unused>>
     I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
-*** [Updated] Large or small numbers
+*** Large or small numbers
     <<sec:scaling>>
-    Update: Only checking numbers which are used as arguments to built-in distributions.
+    Only checking numbers which are used as arguments to built-in distributions.
 **** Description
  Andrew's suggested message:
   Warning message: "Try to make all your parameters scale free. You have a constant in your program that is less than 0.1 or more than 10 in absolute value on line **. This suggests that you might have parameters in your model that have not been scaled to roughly order 1. We suggest rescaling using a multiplier; see section *** of the manual for an example.
