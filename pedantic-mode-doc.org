@@ -1,11 +1,8 @@
 # #+OPTIONS: ^:nil
-# #+OPTIONS: toc:nil
+#+OPTIONS: toc:nil
+#+OPTIONS: num:t
 #+OPTIONS: H:3
 
-    # :PROPERTIES:
-    # :UNNUMBERED: notoc
-    # :END:
-** What is pedantic mode
    Pedantic Mode is a compilation option built into Stanc3 that warns you about potential issues in your Stan program.
 
  For example, if you compile the following program with Pedantic Mode:
@@ -17,21 +14,22 @@
  #+INCLUDE: "ped-mode-ex1.warnings" src
 
  Here are the kinds of issues that Pedantic Mode will find:
-  * Distribution arguments don't match the distribution specification
-  * Some specific distribution is used in an inadvisable way
-  * Very large or very small constants are used as distribution arguments
-  * Branching control flow (like if/else) depends on a parameter value
-  * A parameter is defined but doesn't contribute to target
-  * A parameter is on the left-hand side of multiple twiddles
-  * A parameter has more than one prior distribution
-  * A parameter is given questionable bounds
-  * A variable is used before being assigned a value
+  * Distribution arguments don't match the distribution specification. [[sec:dist-args][Details]].
+  * Some specific distribution is used in an inadvisable way. [[sec:special-dist][Details]].
+  * Very large or very small constants are used as distribution arguments. [[sec:scaling][Details]].
+  * Branching control flow (like if/else) depends on a parameter value. [[sec:param-cf][Details]].
+  * A parameter is defined but doesn't contribute to target. [[sec:unused][Details]].
+  * A parameter is on the left-hand side of multiple twiddles. [[sec:twiddles][Details]].
+  * A parameter has more than one prior distribution. [[sec:priors][Details]].
+  * A parameter is given questionable bounds. [[sec:bounds][Details]].
+  * A variable is used before being assigned a value. [[sec:uninit][Details]].
    
- See also a current list of pedantic mode's limitations; [[sec:limitations]].
+ For a current list of pedantic mode's limitations, see [[sec:limitations][here]].
 
 ** Warning documentation
 *** [Updated] Distribution warnings
 **** Argument and variate constraint warnings
+    <<sec:dist-args>>
      There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
     
      An exception is discrete distributions. I can't yet check the bounds of discrete variables or data variables. That'll be a future update.
@@ -53,6 +51,7 @@
  Speaking of tests, all of the warnings have at least one test in the above mentioned file. There will likely still be bugs if I misinterpreted the Function Reference.
     
 **** Special distribution warnings
+    <<sec:special-dist>>
 ***** Uniform distribution
       Warn on any use when the variate parameter's bound constraint doesn't match the uniform bounds
 ***** (Inverse) Gamma distribution
@@ -61,8 +60,10 @@
       Warn on use to suggest using Cholesky variant
     
 *** [Updated] Parameter defined but never used
+    <<sec:unused>>
     I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
 *** [Updated] Large or small numbers
+    <<sec:scaling>>
     Update: Only checking numbers which are used as arguments to built-in distributions.
 **** Description
  Andrew's suggested message:
@@ -72,11 +73,13 @@
 
      I also allowed 0 without a warning.
 *** Control flow dependent on parameters
+    <<sec:param-cf>>
 **** Description
      Control flow statements in the log_prob section should not depend in any way on the value of parameters, else they might introduce discontinuity.
 **** Implementation notes
      Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
 *** Parameter on LHS of multiple twiddles
+    <<sec:twiddles>>
 **** Implemenation notes
      Search program for twiddles (which only look like top-level TargetPE plus a distribution), look for duplicate LHS parameters
 
@@ -84,6 +87,7 @@
 
      Does not handle array indexing at all, only string matches the parameters.
 *** Parameter with /=1 priors
+    <<sec:priors>>
 **** Description
      Warn user if parameter has no priors or multiple priors Bruno Nicenboim suggested this on https://github.com/stan-dev/stan/issues/2445)
 **** Implementation notes
@@ -95,11 +99,13 @@
 
      The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
 *** Undefined variables
+    <<sec:uninit>>
 **** Implemenation notes
      I haven't worked on this for the PR, I just added it to the --warn-pedantic flag and relocated the code.
 
      It still does not handle array elements, that's another big TODO.
 *** Parameter bounds
+    <<sec:bounds>>
     NOTE: also nonsense bounds
    Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases except A=0, B=1 and A=-1, B=1.
 **** Implementation notes
