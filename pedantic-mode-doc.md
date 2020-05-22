@@ -19,25 +19,25 @@ The compiler will print the following to stderr:
 
     Warning:
       The parameter sigma has no priors.
-    Warning at '../pedantic-mode-prose/ped-mode-ex1.stan', line 10, column 14 to column 16:
+    Warning at 'ped-mode-ex1.stan', line 10, column 14 to column 16:
       The variable mu may not have been assigned a value before its use.
-    Warning at '../pedantic-mode-prose/ped-mode-ex1.stan', line 10, column 18 to column 23:
+    Warning at 'ped-mode-ex1.stan', line 10, column 18 to column 23:
       A normal distribution is given parameter sigma as a scale parameter
       (argument 2), but sigma was not constrained to be strictly positive.
 
 Here are the kinds of issues that Pedantic Mode will find:
 
--   Distribution arguments don't match the distribution specification. [Details here](#org295bb49).
--   Some specific distribution is used in an inadvisable way. [Details here](#org0a76f80).
--   Very large or very small constants are used as distribution arguments. [Details here](#orgac17f77).
--   Branching control flow (like if/else) depends on a parameter value. [Details here](#orgbfa64dc).
--   A parameter is defined but doesn't contribute to target. [Details here](#org2cf36d1).
--   A parameter is on the left-hand side of multiple twiddles. [Details here](#orgb26da03).
--   A parameter has more than one prior distribution. [Details here](#org4527f6c).
--   A parameter is given questionable bounds. [Details here](#org26fa156).
--   A variable is used before being assigned a value. [Details here](#org62aa850).
+-   Distribution arguments don't match the distribution specification. [Details here](#orgc72788a).
+-   Some specific distribution is used in an inadvisable way. [Details here](#org7387498).
+-   Very large or very small constants are used as distribution arguments. [Details here](#orgff3fba7).
+-   Branching control flow (like if/else) depends on a parameter value. [Details here](#org8bfbff7).
+-   A parameter is defined but doesn't contribute to target. [Details here](#orgeeedd55).
+-   A parameter is on the left-hand side of multiple twiddles. [Details here](#org84a148c).
+-   A parameter has more than one prior distribution. [Details here](#orgcc84515).
+-   A parameter is given questionable bounds. [Details here](#orgeb62b53).
+-   A variable is used before being assigned a value. [Details here](#org79445fb).
 
-For a current list of pedantic mode's limitations, see [here](#orge7e533f).
+For a current list of pedantic mode's limitations, see [here](#orgbd7ce14).
 
 
 ## Warning documentation
@@ -48,7 +48,7 @@ For a current list of pedantic mode's limitations, see [here](#orge7e533f).
 
 #### Argument and variate constraint warnings
 
-<a id="org295bb49"></a>
+<a id="orgc72788a"></a>
 When an argument to a built-in distribution certainly does not match that distribution's specification in the [Stan Functions Reference](https://mc-stan.org/docs/functions-reference/index.html), a warning is thrown. This primarily checks if any distribution argument's bounds at declaration, compile-time value, or subtype at declaration (e.g. `simplex`) is incompatible with the domain of the distribution.
 
 For example, in the following program:
@@ -65,15 +65,15 @@ For example, in the following program:
 The parameter of `poisson` should be strictly positive, but `unb_p` is not constrained to be positive.
 This produces the following warning:
 
-    Warning at 'ped_dist_examples.stan', line 6, column 14 to column 19:
+    Warning at 'dist-warn-ex1.stan', line 6, column 14 to column 19:
       A poisson distribution is given parameter unb_p as a rate parameter
       (argument 1), but unb_p was not constrained to be strictly positive.
 
 
-#### Special distribution warnings
+#### Special-case distribution warnings
 
-<a id="org0a76f80"></a>
-Pedantic mode checks for some specific uses of distributions that may indicate a statistical mistake.
+<a id="org7387498"></a>
+Pedantic mode checks for some specific uses of distributions that may indicate a statistical mistake:
 
 
 ##### Uniform distributions
@@ -94,45 +94,40 @@ Any use of the `lkj_corr` distribution generates a warning that suggests using t
 See <https://mc-stan.org/docs/functions-reference/lkj-correlation.html> for details.
 
 
-### Parameter defined but never used
+### Parameter is never used
 
-<a id="org2cf36d1"></a>
+<a id="orgeeedd55"></a>
 A warning is generated when a parameter is declared but does not have any effect on the program.
 This is determined by checking whether the value of the `target` variable depends in any way on each of the parameters.
 
 
-### Large or small numbers
+### Large or small constants in a distribution
 
-<a id="orgac17f77"></a>
+<a id="orgff3fba7"></a>
 When numbers with magnitude less than 0.1 or greater than 10 are used as arguments to a distribution, it indicates that some parameter is not scaled to unit value, so a warning is thrown.
 For a discussion of scaling parameters, see here: <https://mc-stan.org/docs/stan-users-guide/standardizing-predictors-and-outputs.html>
 
 
-### Control flow dependent on parameters
+### Control flow depends on a parameter
 
-<a id="orgbfa64dc"></a>
+<a id="org8bfbff7"></a>
 Control flow statements, such as `if`, `for` and `while`, should not depend on the value of the parameters to determine their branching conditions.
 Otherwise, the program may branch differently between iterations, which is likely to introduce discontinuity into the density function.
 Pedantic mode generates a warning when any branching condition may depend on a parameter value.
 
 
-#### Implementation notes
+### Parameter has multiple twiddles
 
-Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
-
-
-### Parameter on LHS of multiple twiddles
-
-<a id="orgb26da03"></a>
+<a id="org84a148c"></a>
 A warning is generated when a parameter is found on the left-hand side of more than one `\~` statements (or an equivalent `target +=` conditional density statement).
 This pattern is not inherently an issue, but it is unusual and may indicate a mistake.
 
 Pedantic mode only searches for repeated statements, it will not for example generate a warning when a `\~` statement is executed repeatedly inside of a loop.
 
 
-### Parameter with /=1 priors
+### Parameter has zero or multiple priors
 
-<a id="org4527f6c"></a>
+<a id="orgcc84515"></a>
 A warning is generated when a parameter appears to have greater than or less than one prior distribution factor.
 
 This analysis depends on a [*factor graph*](https://en.wikipedia.org/wiki/Factor_graph) representation of a Stan program. A factor F that depends on a parameter P is called a *prior factor for P* if there is no path in the factor graph from F to any data variable except through P.
@@ -140,14 +135,14 @@ This analysis depends on a [*factor graph*](https://en.wikipedia.org/wiki/Factor
 
 ### Variable is used before assignment
 
-<a id="org62aa850"></a>
+<a id="org79445fb"></a>
 A warning is generated when any variable is used before it has been assigned a value.
 This warning is also available as a standalone option to Stanc3, with the flag: `--warn-uninitialized`.
 
 
-### Parameter bounds
+### Strict or nonsensical parameter bounds
 
-<a id="org26fa156"></a>
+<a id="orgeb62b53"></a>
 Parameters that are have strict `upper` and `lower` bounds can cause unmanageably large gradients in a density function, and may only be justified in a few cased.
 A warning is generated for all parameters declared with the bounds `<lower=.., upper=..>` except for `<lower=0, upper=1>` or `<lower=-1, upper=1>`.
 
@@ -156,7 +151,7 @@ In addition, a warning is generated when a parameter bound is found to have `upp
 
 ## Limitations
 
-<a id="orge7e533f"></a>
+<a id="orgbd7ce14"></a>
 
 
 #### Constant values are sometimes uncomputable
@@ -180,6 +175,5 @@ The declaration information for `data` variables is currently not considered, so
 #### Control flow dependent on parameters in nested functions
 
 If a parameter is passed as an argument to a user-defined function within another user-defined function, and then some control flow depends on that argument, the appropriate warning will not be thrown.
-
 
 

@@ -1,7 +1,0 @@
-Warning:
-  The parameter sigma has no priors.
-Warning at '../pedantic-mode-prose/ped-mode-ex1.stan', line 10, column 14 to column 16:
-  The variable mu may not have been assigned a value before its use.
-Warning at '../pedantic-mode-prose/ped-mode-ex1.stan', line 10, column 18 to column 23:
-  A normal distribution is given parameter sigma as a scale parameter
-  (argument 2), but sigma was not constrained to be strictly positive.

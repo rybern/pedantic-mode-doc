@@ -13,7 +13,7 @@
 
  The compiler will print the following to stderr:
 
- #+INCLUDE: "ped-mode-ex1.warnings" src
+ #+INCLUDE: "ped-mode-ex1.stan.warnings" src
 
  Here are the kinds of issues that Pedantic Mode will find:
   * Distribution arguments don't match the distribution specification. [[sec:dist-args][Details here]].
@@ -41,11 +41,11 @@ For example, in the following program:
 The parameter of ~poisson~ should be strictly positive, but ~unb_p~ is not constrained to be positive.
 This produces the following warning:
 
- #+INCLUDE: "dist-warn-ex1.warnings" src
+ #+INCLUDE: "dist-warn-ex1.stan.warnings" src
 
-**** Special distribution warnings
+**** Special-case distribution warnings
      <<sec:special-dist>>
-     Pedantic mode checks for some specific uses of distributions that may indicate a statistical mistake.
+     Pedantic mode checks for some specific uses of distributions that may indicate a statistical mistake:
 ***** Uniform distributions
       Any use of uniform distribution generates a warning, except when the variate parameter's declared ~upper~ and ~lower~ bounds exactly match the uniform distribution bounds.
       In general, assigning a parameter a uniform distribution can create non-differentiable boundary conditions and is not recommended.
@@ -55,73 +55,40 @@ This produces the following warning:
 ***** lkj_corr distribution
       Any use of the ~lkj_corr~ distribution generates a warning that suggests using the Cholesky variant instead.
       See https://mc-stan.org/docs/functions-reference/lkj-correlation.html for details.
-*** Parameter defined but never used
+*** Parameter is never used
     <<sec:unused>>
     A warning is generated when a parameter is declared but does not have any effect on the program.
     This is determined by checking whether the value of the ~target~ variable depends in any way on each of the parameters.
-*** Large or small numbers
+*** Large or small constants in a distribution
     <<sec:scaling>>
     When numbers with magnitude less than 0.1 or greater than 10 are used as arguments to a distribution, it indicates that some parameter is not scaled to unit value, so a warning is thrown.
     For a discussion of scaling parameters, see here: https://mc-stan.org/docs/stan-users-guide/standardizing-predictors-and-outputs.html
-**** COMMENT Description
- Andrew's suggested message:
-  Warning message: "Try to make all your parameters scale free. You have a constant in your program that is less than 0.1 or more than 10 in absolute value on line **. This suggests that you might have parameters in your model that have not been scaled to roughly order 1. We suggest rescaling using a multiplier; see section *** of the manual for an example.
-**** COMMENT Implementation notes
-     Look though all expressions for large numbers. I'm guessing there will be a lot of false positives, I'm wondering how best to narrow it down to the real issue.
-
-     I also allowed 0 without a warning.
-*** Control flow dependent on parameters
+*** Control flow depends on a parameter
     <<sec:param-cf>>
     Control flow statements, such as ~if~, ~for~ and ~while~, should not depend on the value of the parameters to determine their branching conditions.
     Otherwise, the program may branch differently between iterations, which is likely to introduce discontinuity into the density function.
     Pedantic mode generates a warning when any branching condition may depend on a parameter value.
-**** COMMENT Description
-     Control flow statements in the log_prob section should not depend in any way on the value of parameters, else they might introduce discontinuity.
-**** Implementation notes
-     Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
-*** Parameter on LHS of multiple twiddles
+*** Parameter has multiple twiddles
     <<sec:twiddles>>
     A warning is generated when a parameter is found on the left-hand side of more than one ~\~~ statements (or an equivalent ~target +=~ conditional density statement).
     This pattern is not inherently an issue, but it is unusual and may indicate a mistake.
 
     Pedantic mode only searches for repeated statements, it will not for example generate a warning when a ~\~~ statement is executed repeatedly inside of a loop.
-**** COMMENT Implemenation notes
-     Search program for twiddles (which only look like top-level TargetPE plus a distribution), look for duplicate LHS parameters
-
-     Only catches multiple twiddles in the code, not execution, so does not e.g. catch twiddles within a loop.
-
-     Does not handle array indexing at all, only string matches the parameters.
-*** Parameter with /=1 priors
+*** Parameter has zero or multiple priors
     <<sec:priors>>
     A warning is generated when a parameter appears to have greater than or less than one prior distribution factor.
     
     This analysis depends on a [[https://en.wikipedia.org/wiki/Factor_graph][/factor graph/]] representation of a Stan program. A factor F that depends on a parameter P is called a /prior factor for P/ if there is no path in the factor graph from F to any data variable except through P.
-**** COMMENT Description
-     Warn user if parameter has no priors or multiple priors Bruno Nicenboim suggested this on https://github.com/stan-dev/stan/issues/2445)
-**** COMMENT Implementation notes
-     The definition of 'prior' seems tricky in Stan. I came up with a definition that makes sense to me.
-
-     A likelihood is P(X|D,Y), a prior is P(X|Y), where Y are non-data variables. So the important feature seems to be the lack of dependence on data. But not 'dependence' in the programming sense, dependence in the probabilistic sense.
-
-     We can use a factor graph to translate the idea to Stan. If we're wondering whether a neighboring factor F of a variable V is a prior, we should check whether F has any connection to the data that isn't intermediated by V. To do that, we can remove V from the graph and look for any path between F and the data using BFS.
-
-     The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
 *** Variable is used before assignment
     <<sec:uninit>>
     A warning is generated when any variable is used before it has been assigned a value.
     This warning is also available as a standalone option to Stanc3, with the flag: ~--warn-uninitialized~.
-**** COMMENT Implemenation notes
-     I haven't worked on this for the PR, I just added it to the --warn-pedantic flag and relocated the code.
-
-     It still does not handle array elements, that's another big TODO.
-*** Parameter bounds
+*** Strict or nonsensical parameter bounds
     <<sec:bounds>>
     Parameters that are have strict ~upper~ and ~lower~ bounds can cause unmanageably large gradients in a density function, and may only be justified in a few cased.
     A warning is generated for all parameters declared with the bounds ~<lower=.., upper=..>~ except for ~<lower=0, upper=1>~ or ~<lower=-1, upper=1>~.
     
     In addition, a warning is generated when a parameter bound is found to have ~upper - lower <= 0~.
-**** COMMENT Implementation notes
-     I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
 ** Limitations
    <<sec:limitations>>
 **** Constant values are sometimes uncomputable
