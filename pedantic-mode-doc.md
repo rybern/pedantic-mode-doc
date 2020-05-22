@@ -1,6 +1,12 @@
 
 
-# What is pedantic mode
+# Dummy
+
+
+## Dummy
+
+
+### What is pedantic mode
 
 Pedantic Mode is a compilation option built into Stanc3 that warns you about potential issues in your Stan program.
 
@@ -40,16 +46,16 @@ Here are the kinds of issues that Pedantic Mode will find:
 -   A parameter is given questionable bounds
 -   A variable is used before being assigned a value
 
-See also a current list of pedantic mode's limitations; [3](#org862d333).
+See also a current list of pedantic mode's limitations; [1.1.3](#org64df38e).
 
 
-# Warning documentation
+### Warning documentation
 
 
-## [Updated] Distribution warnings
+#### [Updated] Distribution warnings
 
 
-### Argument and variate constraint warnings
+##### Argument and variate constraint warnings
 
 There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
 
@@ -70,61 +76,64 @@ This language could probably be improved if anyone wants to reformat it.
 Speaking of tests, all of the warnings have at least one test in the above mentioned file. There will likely still be bugs if I misinterpreted the Function Reference.
 
 
-### Special distribution warnings
-
-1.  Uniform distribution
-
-    Warn on any use when the variate parameter's bound constraint doesn't match the uniform bounds
-
-2.  (Inverse) Gamma distribution
-
-    Warn when arguments indicate that it might be a poor attempt at an improper prior
-
-3.  lkj\_corr distribution
-
-    Warn on use to suggest using Cholesky variant
+##### Special distribution warnings
 
 
-## [Updated] Parameter defined but never used
+###### Uniform distribution
+
+Warn on any use when the variate parameter's bound constraint doesn't match the uniform bounds
+
+
+###### (Inverse) Gamma distribution
+
+Warn when arguments indicate that it might be a poor attempt at an improper prior
+
+
+###### lkj\_corr distribution
+
+Warn on use to suggest using Cholesky variant
+
+
+#### [Updated] Parameter defined but never used
 
 I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
 
 
-## [Updated] Large or small numbers
+#### [Updated] Large or small numbers
 
 Update: Only checking numbers which are used as arguments to built-in distributions.
 
 
-### Description
+##### Description
 
 Andrew's suggested message:
  Warning message: "Try to make all your parameters scale free. You have a constant in your program that is less than 0.1 or more than 10 in absolute value on line ****. This suggests that you might have parameters in your model that have not been scaled to roughly order 1. We suggest rescaling using a multiplier; see section \***** of the manual for an example.
 
 
-### Implementation notes
+##### Implementation notes
 
 Look though all expressions for large numbers. I'm guessing there will be a lot of false positives, I'm wondering how best to narrow it down to the real issue.
 
 I also allowed 0 without a warning.
 
 
-## Control flow dependent on parameters
+#### Control flow dependent on parameters
 
 
-### Description
+##### Description
 
 Control flow statements in the log\_prob section should not depend in any way on the value of parameters, else they might introduce discontinuity.
 
 
-### Implementation notes
+##### Implementation notes
 
 Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
 
 
-## Parameter on LHS of multiple twiddles
+#### Parameter on LHS of multiple twiddles
 
 
-### Implemenation notes
+##### Implemenation notes
 
 Search program for twiddles (which only look like top-level TargetPE plus a distribution), look for duplicate LHS parameters
 
@@ -133,15 +142,15 @@ Only catches multiple twiddles in the code, not execution, so does not e.g. catc
 Does not handle array indexing at all, only string matches the parameters.
 
 
-## Parameter with /=1 priors
+#### Parameter with /=1 priors
 
 
-### Description
+##### Description
 
 Warn user if parameter has no priors or multiple priors Bruno Nicenboim suggested this on <https://github.com/stan-dev/stan/issues/2445>)
 
 
-### Implementation notes
+##### Implementation notes
 
 The definition of 'prior' seems tricky in Stan. I came up with a definition that makes sense to me.
 
@@ -152,45 +161,45 @@ We can use a factor graph to translate the idea to Stan. If we're wondering whet
 The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
 
 
-## Undefined variables
+#### Undefined variables
 
 
-### Implemenation notes
+##### Implemenation notes
 
 I haven't worked on this for the PR, I just added it to the &#x2013;warn-pedantic flag and relocated the code.
 
 It still does not handle array elements, that's another big TODO.
 
 
-## Parameter bounds
+#### Parameter bounds
 
  NOTE: also nonsense bounds
 Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases except A=0, B=1 and A=-1, B=1.
 
 
-### Implementation notes
+##### Implementation notes
 
 I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
 
 
-# Limitations
+### Limitations
 
-<a id="org862d333"></a>
+<a id="org64df38e"></a>
 
 
-## Handle array elements in dependency analysis
+#### Handle array elements in dependency analysis
 
 Indexed variables are not handled intelligently, so they're treated conservatively (erring toward no warnings)
 
 
-## Figure out how to persist data variable constraints into the MIR
+#### Figure out how to persist data variable constraints into the MIR
 
 When I can do this, I also catch more issues with discrete distributions
 Data variables used as distribution arguments or variates are not currently checked against distribution specifications
 
 
-## Control flow dependent on parameters in nested functions
+#### Control flow dependent on parameters in nested functions
 
 
-## Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
+#### Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
 
