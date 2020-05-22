@@ -62,7 +62,7 @@ This produces the following warning:
 *** Large or small constants in a distribution
     <<sec:scaling>>
     When numbers with magnitude less than 0.1 or greater than 10 are used as arguments to a distribution, it indicates that some parameter is not scaled to unit value, so a warning is thrown.
-    For a discussion of scaling parameters, see here: https://mc-stan.org/docs/stan-users-guide/standardizing-predictors-and-outputs.html
+    See https://mc-stan.org/docs/stan-users-guide/standardizing-predictors-and-outputs.html for a discussion of scaling parameters.
 *** Control flow depends on a parameter
     <<sec:param-cf>>
     Control flow statements, such as ~if~, ~for~ and ~while~, should not depend on the value of the parameters to determine their branching conditions.
@@ -70,10 +70,10 @@ This produces the following warning:
     Pedantic mode generates a warning when any branching condition may depend on a parameter value.
 *** Parameter has multiple twiddles
     <<sec:twiddles>>
-    A warning is generated when a parameter is found on the left-hand side of more than one ~\~~ statements (or an equivalent ~target +=~ conditional density statement).
+    A warning is generated when a parameter is found on the left-hand side of more than one ~ statements (or an equivalent ~target +=~ conditional density statement).
     This pattern is not inherently an issue, but it is unusual and may indicate a mistake.
 
-    Pedantic mode only searches for repeated statements, it will not for example generate a warning when a ~\~~ statement is executed repeatedly inside of a loop.
+    Pedantic mode only searches for repeated statements, it will not for example generate a warning when a ~ statement is executed repeatedly inside of a loop.
 *** Parameter has zero or multiple priors
     <<sec:priors>>
     A warning is generated when a parameter appears to have greater than or less than one prior distribution factor.
