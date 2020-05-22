@@ -26,17 +26,17 @@ The compiler will print the following to stderr:
 
 Here are the kinds of issues that Pedantic Mode will find:
 
--   Distribution arguments don't match the distribution specification. [Details here](#org4de4edc).
--   Some specific distribution is used in an inadvisable way. [Details here](#org0ed937d).
--   Very large or very small constants are used as distribution arguments. [Details here](#orgddf2155).
--   Branching control flow (like if/else) depends on a parameter value. [Details here](#org6292083).
--   A parameter is defined but doesn't contribute to target. [Details here](#org966a991).
--   A parameter is on the left-hand side of multiple twiddles. [Details here](#org255e572).
--   A parameter has more than one prior distribution. [Details here](#org4e38436).
--   A parameter is given questionable bounds. [Details here](#orgbbe5def).
--   A variable is used before being assigned a value. [Details here](#org4b1557a).
+-   Distribution arguments don't match the distribution specification. [Details here](#org2b9a700).
+-   Some specific distribution is used in an inadvisable way. [Details here](#org5c6b605).
+-   Very large or very small constants are used as distribution arguments. [Details here](#org7bc6bb1).
+-   Branching control flow (like if/else) depends on a parameter value. [Details here](#org1a07d10).
+-   A parameter is defined but doesn't contribute to target. [Details here](#org546c947).
+-   A parameter is on the left-hand side of multiple twiddles. [Details here](#orgdf3fc82).
+-   A parameter has more than one prior distribution. [Details here](#org9983ba5).
+-   A parameter is given questionable bounds. [Details here](#org67baa5f).
+-   A variable is used before being assigned a value. [Details here](#org470c8f8).
 
-For a current list of pedantic mode's limitations, see [here](#org43f19e8).
+For a current list of pedantic mode's limitations, see [here](#org0121f03).
 
 
 ## Warning documentation
@@ -47,7 +47,7 @@ For a current list of pedantic mode's limitations, see [here](#org43f19e8).
 
 #### Argument and variate constraint warnings
 
-<a id="org4de4edc"></a>
+<a id="org2b9a700"></a>
  There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
 
 An exception is discrete distributions. I can't yet check the bounds of discrete variables or data variables. That'll be a future update.
@@ -56,7 +56,7 @@ An argument constraint is checked for consistency against the parameter declarat
 
 Warning messages try to be as descriptive as possible, including English descriptions of the argument role (e.g. "a scale parameter") and the constraint (e.g. "constrained to be positive"), as well as the distribution name, variable name and location.
 
-Here's an example message pulled from a test in test/unit/Pedantic<sub>mode.ml</sub>:
+Here's an example message pulled from a test in test/unit/Pedantic\_mode.ml:
 
     Warning at 'string', line 84, column 17 to column 22:
       A chi_square distribution has parameter unb_p as degrees of freedom
@@ -69,7 +69,7 @@ Speaking of tests, all of the warnings have at least one test in the above menti
 
 #### Special distribution warnings
 
-<a id="org0ed937d"></a>
+<a id="org5c6b605"></a>
 
 
 ##### Uniform distribution
@@ -82,20 +82,20 @@ Warn on any use when the variate parameter's bound constraint doesn't match the 
 Warn when arguments indicate that it might be a poor attempt at an improper prior
 
 
-##### lkj<sub>corr</sub> distribution
+##### lkj\_corr distribution
 
 Warn on use to suggest using Cholesky variant
 
 
 ### Parameter defined but never used
 
-<a id="org966a991"></a>
+<a id="org546c947"></a>
 I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
 
 
 ### Large or small numbers
 
-<a id="orgddf2155"></a>
+<a id="org7bc6bb1"></a>
 Only checking numbers which are used as arguments to built-in distributions.
 
 
@@ -114,12 +114,12 @@ I also allowed 0 without a warning.
 
 ### Control flow dependent on parameters
 
-<a id="org6292083"></a>
+<a id="org1a07d10"></a>
 
 
 #### Description
 
-Control flow statements in the log<sub>prob</sub> section should not depend in any way on the value of parameters, else they might introduce discontinuity.
+Control flow statements in the log\_prob section should not depend in any way on the value of parameters, else they might introduce discontinuity.
 
 
 #### Implementation notes
@@ -129,7 +129,7 @@ Heavy use of dependence analysis. Iterates through all control flow statements, 
 
 ### Parameter on LHS of multiple twiddles
 
-<a id="org255e572"></a>
+<a id="orgdf3fc82"></a>
 
 
 #### Implemenation notes
@@ -143,7 +143,7 @@ Does not handle array indexing at all, only string matches the parameters.
 
 ### Parameter with /=1 priors
 
-<a id="org4e38436"></a>
+<a id="org9983ba5"></a>
 
 
 #### Description
@@ -164,7 +164,7 @@ The results using this definition seem to match my intuition, but I'm betting ot
 
 ### Undefined variables
 
-<a id="org4b1557a"></a>
+<a id="org470c8f8"></a>
 
 
 #### Implemenation notes
@@ -176,7 +176,7 @@ It still does not handle array elements, that's another big TODO.
 
 ### Parameter bounds
 
- <a id="orgbbe5def"></a>
+ <a id="org67baa5f"></a>
  NOTE: also nonsense bounds
 Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases except A=0, B=1 and A=-1, B=1.
 
@@ -188,24 +188,15 @@ I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting e
 
 ## Limitations
 
-<a id="org43f19e8"></a>
+<a id="org0121f03"></a>
 
-
-### Handle array elements in dependency analysis
-
-Indexed variables are not handled intelligently, so they're treated conservatively (erring toward no warnings)
-
-
-### Figure out how to persist data variable constraints into the MIR
-
-When I can do this, I also catch more issues with discrete distributions
-Data variables used as distribution arguments or variates are not currently checked against distribution specifications
-
-
-### Control flow dependent on parameters in nested functions
-
-
-### Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
+-   Handle array elements in dependency analysis
+    Indexed variables are not handled intelligently, so they're treated conservatively (erring toward no warnings)
+-   Figure out how to persist data variable constraints into the MIR
+    When I can do this, I also catch more issues with discrete distributions
+    Data variables used as distribution arguments or variates are not currently checked against distribution specifications
+-   Control flow dependent on parameters in nested functions
+-   Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
 
 
 # Dummy

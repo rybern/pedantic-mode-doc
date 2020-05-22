@@ -1,4 +1,4 @@
-# #+OPTIONS: ^:nil
+#+OPTIONS: ^:nil
 #+OPTIONS: toc:nil
 #+OPTIONS: num:t
 #+OPTIONS: H:5
@@ -112,13 +112,13 @@
      I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
 ** Limitations
    <<sec:limitations>>
-*** Handle array elements in dependency analysis
+  * Handle array elements in dependency analysis
     Indexed variables are not handled intelligently, so they're treated conservatively (erring toward no warnings)
-*** Figure out how to persist data variable constraints into the MIR
+  * Figure out how to persist data variable constraints into the MIR
     When I can do this, I also catch more issues with discrete distributions
     Data variables used as distribution arguments or variates are not currently checked against distribution specifications
-*** Control flow dependent on parameters in nested functions
-*** Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
+  * Control flow dependent on parameters in nested functions
+  * Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
 * Dummy
      :PROPERTIES:
      :UNNUMBERED: notoc
