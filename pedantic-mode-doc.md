@@ -1,28 +1,3 @@
-
-# Table of Contents
-
-    1.  [What is pedantic mode](#orgaceecc9)
-    2.  [Warning documentation](#org595fb62)
-        1.  [[Updated] Distribution warnings](#org93be147)
-        2.  [[Updated] Parameter defined but never used](#org8a03511)
-        3.  [[Updated] Large or small numbers](#org7818103)
-        4.  [Control flow dependent on parameters](#org3680a6d)
-        5.  [Parameter on LHS of multiple twiddles](#org3477119)
-        6.  [Parameter with /=1 priors](#org8d88358)
-        7.  [Undefined variables](#org5746bcb)
-        8.  [Parameter bounds](#org734fa0a)
-    3.  [Limitations](#org1188cc3)
-        1.  [Handle array elements in dependency analysis](#orgb51c9c4)
-        2.  [Figure out how to persist data variable constraints into the MIR](#org635959a)
-        3.  [Control flow dependent on parameters in nested functions](#org139edb4)
-        4.  [Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run](#org3f0a9af)
-
-
-
-<a id="orgaceecc9"></a>
-
-## What is pedantic mode
-
 Pedantic Mode is a compilation option built into Stanc3 that warns you about potential issues in your Stan program.
 
 For example, if you compile the following program with Pedantic Mode:
@@ -61,15 +36,31 @@ Here are the kinds of issues that Pedantic Mode will find:
 -   A parameter is given questionable bounds
 -   A variable is used before being assigned a value
 
-See also a current list of pedantic mode's limitations; [0.3](#org612b5f6).
+See also a current list of pedantic mode's limitations; [0.3](#org20ffa84).
+
+1.  [Warning documentation](#org728cf21)
+    1.  [[Updated] Distribution warnings](#org1fa15d9)
+    2.  [[Updated] Parameter defined but never used](#org71bde4f)
+    3.  [[Updated] Large or small numbers](#org3adb96a)
+    4.  [Control flow dependent on parameters](#org97310dc)
+    5.  [Parameter on LHS of multiple twiddles](#orgdfb924a)
+    6.  [Parameter with /=1 priors](#org25bb3d4)
+    7.  [Undefined variables](#org32d29b7)
+    8.  [Parameter bounds](#org80b740d)
+2.  [Limitations](#orga806993)
+    1.  [Handle array elements in dependency analysis](#orgeabfeed)
+    2.  [Figure out how to persist data variable constraints into the MIR](#orge948588)
+    3.  [Control flow dependent on parameters in nested functions](#org60bc6fc)
+    4.  [Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run](#org329907a)
 
 
-<a id="org595fb62"></a>
+
+<a id="org728cf21"></a>
 
 ## Warning documentation
 
 
-<a id="org93be147"></a>
+<a id="org1fa15d9"></a>
 
 ### [Updated] Distribution warnings
 
@@ -108,14 +99,14 @@ See also a current list of pedantic mode's limitations; [0.3](#org612b5f6).
         Warn on use to suggest using Cholesky variant
 
 
-<a id="org8a03511"></a>
+<a id="org71bde4f"></a>
 
 ### [Updated] Parameter defined but never used
 
 I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
 
 
-<a id="org7818103"></a>
+<a id="org3adb96a"></a>
 
 ### [Updated] Large or small numbers
 
@@ -133,7 +124,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
     I also allowed 0 without a warning.
 
 
-<a id="org3680a6d"></a>
+<a id="org97310dc"></a>
 
 ### Control flow dependent on parameters
 
@@ -146,7 +137,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
     Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
 
 
-<a id="org3477119"></a>
+<a id="orgdfb924a"></a>
 
 ### Parameter on LHS of multiple twiddles
 
@@ -159,7 +150,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
     Does not handle array indexing at all, only string matches the parameters.
 
 
-<a id="org8d88358"></a>
+<a id="org25bb3d4"></a>
 
 ### Parameter with /=1 priors
 
@@ -178,7 +169,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
     The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
 
 
-<a id="org5746bcb"></a>
+<a id="org32d29b7"></a>
 
 ### Undefined variables
 
@@ -189,7 +180,7 @@ Update: Only checking numbers which are used as arguments to built-in distributi
     It still does not handle array elements, that's another big TODO.
 
 
-<a id="org734fa0a"></a>
+<a id="org80b740d"></a>
 
 ### Parameter bounds
 
@@ -201,21 +192,21 @@ Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases e
     I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
 
 
-<a id="org1188cc3"></a>
+<a id="orga806993"></a>
 
 ## Limitations
 
-<a id="org612b5f6"></a>
+<a id="org20ffa84"></a>
 
 
-<a id="orgb51c9c4"></a>
+<a id="orgeabfeed"></a>
 
 ### Handle array elements in dependency analysis
 
 Indexed variables are not handled intelligently, so they're treated conservatively (erring toward no warnings)
 
 
-<a id="org635959a"></a>
+<a id="orge948588"></a>
 
 ### Figure out how to persist data variable constraints into the MIR
 
@@ -223,17 +214,15 @@ When I can do this, I also catch more issues with discrete distributions
 Data variables used as distribution arguments or variates are not currently checked against distribution specifications
 
 
-<a id="org139edb4"></a>
+<a id="org60bc6fc"></a>
 
 ### Control flow dependent on parameters in nested functions
 
 
-<a id="org3f0a9af"></a>
+<a id="org329907a"></a>
 
 ### Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
 
-
-<a id="org22e4be1"></a>
 
 # Dummy
 

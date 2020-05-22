@@ -114,6 +114,9 @@
 *** Control flow dependent on parameters in nested functions
 *** Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
 * Dummy
+     :PROPERTIES:
+     :UNNUMBERED: notoc
+     :END:
 * COMMENT Source
 ** Discourse
 *** What is pedantic mode
