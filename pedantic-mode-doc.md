@@ -176,6 +176,3 @@ The declaration information for `data` variables is currently not considered, so
 
 If a parameter is passed as an argument to a user-defined function within another user-defined function, and then some control flow depends on that argument, the appropriate warning will not be thrown.
 
-
-# Dummy
-
