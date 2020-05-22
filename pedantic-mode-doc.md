@@ -26,17 +26,17 @@ The compiler will print the following to stderr:
 
 Here are the kinds of issues that Pedantic Mode will find:
 
--   Distribution arguments don't match the distribution specification. [Details here](#orgc285e76).
--   Some specific distribution is used in an inadvisable way. [Details here](#orgf3d481f).
--   Very large or very small constants are used as distribution arguments. [Details here](#org9fcbf35).
--   Branching control flow (like if/else) depends on a parameter value. [Details here](#org46788c6).
--   A parameter is defined but doesn't contribute to target. [Details here](#org2d4cffd).
--   A parameter is on the left-hand side of multiple twiddles. [Details here](#org0dba442).
--   A parameter has more than one prior distribution. [Details here](#org40844ed).
--   A parameter is given questionable bounds. [Details here](#org29cf51b).
--   A variable is used before being assigned a value. [Details here](#orgf336341).
+-   Distribution arguments don't match the distribution specification. [Details here](#org4de4edc).
+-   Some specific distribution is used in an inadvisable way. [Details here](#org0ed937d).
+-   Very large or very small constants are used as distribution arguments. [Details here](#orgddf2155).
+-   Branching control flow (like if/else) depends on a parameter value. [Details here](#org6292083).
+-   A parameter is defined but doesn't contribute to target. [Details here](#org966a991).
+-   A parameter is on the left-hand side of multiple twiddles. [Details here](#org255e572).
+-   A parameter has more than one prior distribution. [Details here](#org4e38436).
+-   A parameter is given questionable bounds. [Details here](#orgbbe5def).
+-   A variable is used before being assigned a value. [Details here](#org4b1557a).
 
-For a current list of pedantic mode's limitations, see [here](#orgcd45eef).
+For a current list of pedantic mode's limitations, see [here](#org43f19e8).
 
 
 ## Warning documentation
@@ -44,137 +44,151 @@ For a current list of pedantic mode's limitations, see [here](#orgcd45eef).
 
 ### Distribution warnings
 
-1.  Argument and variate constraint warnings
 
-    <a id="orgc285e76"></a>
-     There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
-    
-    An exception is discrete distributions. I can't yet check the bounds of discrete variables or data variables. That'll be a future update.
-    
-    An argument constraint is checked for consistency against the parameter declaration or literal value (or what becomes a literal value after partial evaluation). For example, if a parameter is used as a scale parameter and is constrained to be lower=1, no warning is generated, but if it were constrained lower=-1, a warning is generated.
-    
-    Warning messages try to be as descriptive as possible, including English descriptions of the argument role (e.g. "a scale parameter") and the constraint (e.g. "constrained to be positive"), as well as the distribution name, variable name and location.
-    
-    Here's an example message pulled from a test in test/unit/Pedantic<sub>mode.ml</sub>:
-    
-        Warning at 'string', line 84, column 17 to column 22:
-          A chi_square distribution has parameter unb_p as degrees of freedom
-          (argument 1), but unb_p is not constrained to be positive.
-    
-    This language could probably be improved if anyone wants to reformat it.
-    
-    Speaking of tests, all of the warnings have at least one test in the above mentioned file. There will likely still be bugs if I misinterpreted the Function Reference.
+#### Argument and variate constraint warnings
 
-2.  Special distribution warnings
+<a id="org4de4edc"></a>
+ There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
 
-    <a id="orgf3d481f"></a>
-    
-    1.  Uniform distribution
-    
-        Warn on any use when the variate parameter's bound constraint doesn't match the uniform bounds
-    
-    2.  (Inverse) Gamma distribution
-    
-        Warn when arguments indicate that it might be a poor attempt at an improper prior
-    
-    3.  lkj<sub>corr</sub> distribution
-    
-        Warn on use to suggest using Cholesky variant
+An exception is discrete distributions. I can't yet check the bounds of discrete variables or data variables. That'll be a future update.
+
+An argument constraint is checked for consistency against the parameter declaration or literal value (or what becomes a literal value after partial evaluation). For example, if a parameter is used as a scale parameter and is constrained to be lower=1, no warning is generated, but if it were constrained lower=-1, a warning is generated.
+
+Warning messages try to be as descriptive as possible, including English descriptions of the argument role (e.g. "a scale parameter") and the constraint (e.g. "constrained to be positive"), as well as the distribution name, variable name and location.
+
+Here's an example message pulled from a test in test/unit/Pedantic<sub>mode.ml</sub>:
+
+    Warning at 'string', line 84, column 17 to column 22:
+      A chi_square distribution has parameter unb_p as degrees of freedom
+      (argument 1), but unb_p is not constrained to be positive.
+
+This language could probably be improved if anyone wants to reformat it.
+
+Speaking of tests, all of the warnings have at least one test in the above mentioned file. There will likely still be bugs if I misinterpreted the Function Reference.
+
+
+#### Special distribution warnings
+
+<a id="org0ed937d"></a>
+
+
+##### Uniform distribution
+
+Warn on any use when the variate parameter's bound constraint doesn't match the uniform bounds
+
+
+##### (Inverse) Gamma distribution
+
+Warn when arguments indicate that it might be a poor attempt at an improper prior
+
+
+##### lkj<sub>corr</sub> distribution
+
+Warn on use to suggest using Cholesky variant
 
 
 ### Parameter defined but never used
 
-<a id="org2d4cffd"></a>
+<a id="org966a991"></a>
 I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
 
 
 ### Large or small numbers
 
-<a id="org9fcbf35"></a>
+<a id="orgddf2155"></a>
 Only checking numbers which are used as arguments to built-in distributions.
 
-1.  Description
 
-    Andrew's suggested message:
-     Warning message: "Try to make all your parameters scale free. You have a constant in your program that is less than 0.1 or more than 10 in absolute value on line ****. This suggests that you might have parameters in your model that have not been scaled to roughly order 1. We suggest rescaling using a multiplier; see section \***** of the manual for an example.
+#### Description
 
-2.  Implementation notes
+Andrew's suggested message:
+ Warning message: "Try to make all your parameters scale free. You have a constant in your program that is less than 0.1 or more than 10 in absolute value on line ****. This suggests that you might have parameters in your model that have not been scaled to roughly order 1. We suggest rescaling using a multiplier; see section \***** of the manual for an example.
 
-    Look though all expressions for large numbers. I'm guessing there will be a lot of false positives, I'm wondering how best to narrow it down to the real issue.
-    
-    I also allowed 0 without a warning.
+
+#### Implementation notes
+
+Look though all expressions for large numbers. I'm guessing there will be a lot of false positives, I'm wondering how best to narrow it down to the real issue.
+
+I also allowed 0 without a warning.
 
 
 ### Control flow dependent on parameters
 
-<a id="org46788c6"></a>
+<a id="org6292083"></a>
 
-1.  Description
 
-    Control flow statements in the log<sub>prob</sub> section should not depend in any way on the value of parameters, else they might introduce discontinuity.
+#### Description
 
-2.  Implementation notes
+Control flow statements in the log<sub>prob</sub> section should not depend in any way on the value of parameters, else they might introduce discontinuity.
 
-    Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
+
+#### Implementation notes
+
+Heavy use of dependence analysis. Iterates through all control flow statements, finds all the dependencies of their branching decision expressions, and checks that those have no parameter dependencies
 
 
 ### Parameter on LHS of multiple twiddles
 
-<a id="org0dba442"></a>
+<a id="org255e572"></a>
 
-1.  Implemenation notes
 
-    Search program for twiddles (which only look like top-level TargetPE plus a distribution), look for duplicate LHS parameters
-    
-    Only catches multiple twiddles in the code, not execution, so does not e.g. catch twiddles within a loop.
-    
-    Does not handle array indexing at all, only string matches the parameters.
+#### Implemenation notes
+
+Search program for twiddles (which only look like top-level TargetPE plus a distribution), look for duplicate LHS parameters
+
+Only catches multiple twiddles in the code, not execution, so does not e.g. catch twiddles within a loop.
+
+Does not handle array indexing at all, only string matches the parameters.
 
 
 ### Parameter with /=1 priors
 
-<a id="org40844ed"></a>
+<a id="org4e38436"></a>
 
-1.  Description
 
-    Warn user if parameter has no priors or multiple priors Bruno Nicenboim suggested this on <https://github.com/stan-dev/stan/issues/2445>)
+#### Description
 
-2.  Implementation notes
+Warn user if parameter has no priors or multiple priors Bruno Nicenboim suggested this on <https://github.com/stan-dev/stan/issues/2445>)
 
-    The definition of 'prior' seems tricky in Stan. I came up with a definition that makes sense to me.
-    
-    A likelihood is P(X|D,Y), a prior is P(X|Y), where Y are non-data variables. So the important feature seems to be the lack of dependence on data. But not 'dependence' in the programming sense, dependence in the probabilistic sense.
-    
-    We can use a factor graph to translate the idea to Stan. If we're wondering whether a neighboring factor F of a variable V is a prior, we should check whether F has any connection to the data that isn't intermediated by V. To do that, we can remove V from the graph and look for any path between F and the data using BFS.
-    
-    The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
+
+#### Implementation notes
+
+The definition of 'prior' seems tricky in Stan. I came up with a definition that makes sense to me.
+
+A likelihood is P(X|D,Y), a prior is P(X|Y), where Y are non-data variables. So the important feature seems to be the lack of dependence on data. But not 'dependence' in the programming sense, dependence in the probabilistic sense.
+
+We can use a factor graph to translate the idea to Stan. If we're wondering whether a neighboring factor F of a variable V is a prior, we should check whether F has any connection to the data that isn't intermediated by V. To do that, we can remove V from the graph and look for any path between F and the data using BFS.
+
+The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
 
 
 ### Undefined variables
 
-<a id="orgf336341"></a>
+<a id="org4b1557a"></a>
 
-1.  Implemenation notes
 
-    I haven't worked on this for the PR, I just added it to the &#x2013;warn-pedantic flag and relocated the code.
-    
-    It still does not handle array elements, that's another big TODO.
+#### Implemenation notes
+
+I haven't worked on this for the PR, I just added it to the &#x2013;warn-pedantic flag and relocated the code.
+
+It still does not handle array elements, that's another big TODO.
 
 
 ### Parameter bounds
 
- <a id="org29cf51b"></a>
+ <a id="orgbbe5def"></a>
  NOTE: also nonsense bounds
 Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases except A=0, B=1 and A=-1, B=1.
 
-1.  Implementation notes
 
-    I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
+#### Implementation notes
+
+I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
 
 
 ## Limitations
 
-<a id="orgcd45eef"></a>
+<a id="org43f19e8"></a>
 
 
 ### Handle array elements in dependency analysis
