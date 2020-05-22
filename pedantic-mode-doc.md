@@ -1,3 +1,4 @@
+
 Pedantic Mode is a compilation option built into Stanc3 that warns you about potential issues in your Stan program.
 
 For example, if you compile the following program with Pedantic Mode:
@@ -26,17 +27,17 @@ The compiler will print the following to stderr:
 
 Here are the kinds of issues that Pedantic Mode will find:
 
--   Distribution arguments don't match the distribution specification. [Details here](#org2b9a700).
--   Some specific distribution is used in an inadvisable way. [Details here](#org5c6b605).
--   Very large or very small constants are used as distribution arguments. [Details here](#org7bc6bb1).
--   Branching control flow (like if/else) depends on a parameter value. [Details here](#org1a07d10).
--   A parameter is defined but doesn't contribute to target. [Details here](#org546c947).
--   A parameter is on the left-hand side of multiple twiddles. [Details here](#orgdf3fc82).
--   A parameter has more than one prior distribution. [Details here](#org9983ba5).
--   A parameter is given questionable bounds. [Details here](#org67baa5f).
--   A variable is used before being assigned a value. [Details here](#org470c8f8).
+-   Distribution arguments don't match the distribution specification. [Details here](#org295bb49).
+-   Some specific distribution is used in an inadvisable way. [Details here](#org0a76f80).
+-   Very large or very small constants are used as distribution arguments. [Details here](#orgac17f77).
+-   Branching control flow (like if/else) depends on a parameter value. [Details here](#orgbfa64dc).
+-   A parameter is defined but doesn't contribute to target. [Details here](#org2cf36d1).
+-   A parameter is on the left-hand side of multiple twiddles. [Details here](#orgb26da03).
+-   A parameter has more than one prior distribution. [Details here](#org4527f6c).
+-   A parameter is given questionable bounds. [Details here](#org26fa156).
+-   A variable is used before being assigned a value. [Details here](#org62aa850).
 
-For a current list of pedantic mode's limitations, see [here](#org0121f03).
+For a current list of pedantic mode's limitations, see [here](#orge7e533f).
 
 
 ## Warning documentation
@@ -47,79 +48,72 @@ For a current list of pedantic mode's limitations, see [here](#org0121f03).
 
 #### Argument and variate constraint warnings
 
-<a id="org2b9a700"></a>
- There is a warning for each constrained argument of each built-in distribution, based on the information from the Functions Reference. These include for example inclusive/exclusive upper and lower bounds, covariance matrices, cholesky correlation matrices, simplexes, etc.
+<a id="org295bb49"></a>
+When an argument to a built-in distribution certainly does not match that distribution's specification in the [Stan Functions Reference](https://mc-stan.org/docs/functions-reference/index.html), a warning is thrown. This primarily checks if any distribution argument's bounds at declaration, compile-time value, or subtype at declaration (e.g. `simplex`) is incompatible with the domain of the distribution.
 
-An exception is discrete distributions. I can't yet check the bounds of discrete variables or data variables. That'll be a future update.
+For example, in the following program:
 
-An argument constraint is checked for consistency against the parameter declaration or literal value (or what becomes a literal value after partial evaluation). For example, if a parameter is used as a scale parameter and is constrained to be lower=1, no warning is generated, but if it were constrained lower=-1, a warning is generated.
+    parameters {
+      real unb_p;
+      real<lower=0> pos_p;
+    }
+    model {
+      1 ~ poisson(unb_p);
+      1 ~ poisson(pos_p);
+    }
 
-Warning messages try to be as descriptive as possible, including English descriptions of the argument role (e.g. "a scale parameter") and the constraint (e.g. "constrained to be positive"), as well as the distribution name, variable name and location.
+The parameter of `poisson` should be strictly positive, but `unb_p` is not constrained to be positive.
+This produces the following warning:
 
-Here's an example message pulled from a test in test/unit/Pedantic\_mode.ml:
-
-    Warning at 'string', line 84, column 17 to column 22:
-      A chi_square distribution has parameter unb_p as degrees of freedom
-      (argument 1), but unb_p is not constrained to be positive.
-
-This language could probably be improved if anyone wants to reformat it.
-
-Speaking of tests, all of the warnings have at least one test in the above mentioned file. There will likely still be bugs if I misinterpreted the Function Reference.
+    Warning at 'ped_dist_examples.stan', line 6, column 14 to column 19:
+      A poisson distribution is given parameter unb_p as a rate parameter
+      (argument 1), but unb_p was not constrained to be strictly positive.
 
 
 #### Special distribution warnings
 
-<a id="org5c6b605"></a>
+<a id="org0a76f80"></a>
+Pedantic mode checks for some specific uses of distributions that may indicate a statistical mistake.
 
 
-##### Uniform distribution
+##### Uniform distributions
 
-Warn on any use when the variate parameter's bound constraint doesn't match the uniform bounds
+Any use of uniform distribution generates a warning, except when the variate parameter's declared `upper` and `lower` bounds exactly match the uniform distribution bounds.
+In general, assigning a parameter a uniform distribution can create non-differentiable boundary conditions and is not recommended.
 
 
-##### (Inverse) Gamma distribution
+##### (Inverse-) Gamma distributions
 
-Warn when arguments indicate that it might be a poor attempt at an improper prior
+Gamma distributions are sometimes used as an attempt to assign an improper prior to a parameter.
+Pedantic mode gives a warning when the Gamma arguments indicate that this may be the case.
 
 
 ##### lkj\_corr distribution
 
-Warn on use to suggest using Cholesky variant
+Any use of the `lkj_corr` distribution generates a warning that suggests using the Cholesky variant instead.
+See <https://mc-stan.org/docs/functions-reference/lkj-correlation.html> for details.
 
 
 ### Parameter defined but never used
 
-<a id="org546c947"></a>
-I now build a factor graph and check that there are no declared parameters missing from the factor graph. This should effectively check if any factors don't contribute (even indirectly) to the target value.
+<a id="org2cf36d1"></a>
+A warning is generated when a parameter is declared but does not have any effect on the program.
+This is determined by checking whether the value of the `target` variable depends in any way on each of the parameters.
 
 
 ### Large or small numbers
 
-<a id="org7bc6bb1"></a>
-Only checking numbers which are used as arguments to built-in distributions.
-
-
-#### Description
-
-Andrew's suggested message:
- Warning message: "Try to make all your parameters scale free. You have a constant in your program that is less than 0.1 or more than 10 in absolute value on line ****. This suggests that you might have parameters in your model that have not been scaled to roughly order 1. We suggest rescaling using a multiplier; see section \***** of the manual for an example.
-
-
-#### Implementation notes
-
-Look though all expressions for large numbers. I'm guessing there will be a lot of false positives, I'm wondering how best to narrow it down to the real issue.
-
-I also allowed 0 without a warning.
+<a id="orgac17f77"></a>
+When numbers with magnitude less than 0.1 or greater than 10 are used as arguments to a distribution, it indicates that some parameter is not scaled to unit value, so a warning is thrown.
+For a discussion of scaling parameters, see here: <https://mc-stan.org/docs/stan-users-guide/standardizing-predictors-and-outputs.html>
 
 
 ### Control flow dependent on parameters
 
-<a id="org1a07d10"></a>
-
-
-#### Description
-
-Control flow statements in the log\_prob section should not depend in any way on the value of parameters, else they might introduce discontinuity.
+<a id="orgbfa64dc"></a>
+Control flow statements, such as `if`, `for` and `while`, should not depend on the value of the parameters to determine their branching conditions.
+Otherwise, the program may branch differently between iterations, which is likely to introduce discontinuity into the density function.
+Pedantic mode generates a warning when any branching condition may depend on a parameter value.
 
 
 #### Implementation notes
@@ -129,75 +123,63 @@ Heavy use of dependence analysis. Iterates through all control flow statements, 
 
 ### Parameter on LHS of multiple twiddles
 
-<a id="orgdf3fc82"></a>
+<a id="orgb26da03"></a>
+A warning is generated when a parameter is found on the left-hand side of more than one `\~` statements (or an equivalent `target +=` conditional density statement).
+This pattern is not inherently an issue, but it is unusual and may indicate a mistake.
 
-
-#### Implemenation notes
-
-Search program for twiddles (which only look like top-level TargetPE plus a distribution), look for duplicate LHS parameters
-
-Only catches multiple twiddles in the code, not execution, so does not e.g. catch twiddles within a loop.
-
-Does not handle array indexing at all, only string matches the parameters.
+Pedantic mode only searches for repeated statements, it will not for example generate a warning when a `\~` statement is executed repeatedly inside of a loop.
 
 
 ### Parameter with /=1 priors
 
-<a id="org9983ba5"></a>
+<a id="org4527f6c"></a>
+A warning is generated when a parameter appears to have greater than or less than one prior distribution factor.
+
+This analysis depends on a [*factor graph*](https://en.wikipedia.org/wiki/Factor_graph) representation of a Stan program. A factor F that depends on a parameter P is called a *prior factor for P* if there is no path in the factor graph from F to any data variable except through P.
 
 
-#### Description
+### Variable is used before assignment
 
-Warn user if parameter has no priors or multiple priors Bruno Nicenboim suggested this on <https://github.com/stan-dev/stan/issues/2445>)
-
-
-#### Implementation notes
-
-The definition of 'prior' seems tricky in Stan. I came up with a definition that makes sense to me.
-
-A likelihood is P(X|D,Y), a prior is P(X|Y), where Y are non-data variables. So the important feature seems to be the lack of dependence on data. But not 'dependence' in the programming sense, dependence in the probabilistic sense.
-
-We can use a factor graph to translate the idea to Stan. If we're wondering whether a neighboring factor F of a variable V is a prior, we should check whether F has any connection to the data that isn't intermediated by V. To do that, we can remove V from the graph and look for any path between F and the data using BFS.
-
-The results using this definition seem to match my intuition, but I'm betting others will have some thoughts.
-
-
-### Undefined variables
-
-<a id="org470c8f8"></a>
-
-
-#### Implemenation notes
-
-I haven't worked on this for the PR, I just added it to the &#x2013;warn-pedantic flag and relocated the code.
-
-It still does not handle array elements, that's another big TODO.
+<a id="org62aa850"></a>
+A warning is generated when any variable is used before it has been assigned a value.
+This warning is also available as a standalone option to Stanc3, with the flag: `--warn-uninitialized`.
 
 
 ### Parameter bounds
 
- <a id="org67baa5f"></a>
- NOTE: also nonsense bounds
-Parameter bounds of the form "lower=A, upper=B" should be flagged in all cases except A=0, B=1 and A=-1, B=1.
+<a id="org26fa156"></a>
+Parameters that are have strict `upper` and `lower` bounds can cause unmanageably large gradients in a density function, and may only be justified in a few cased.
+A warning is generated for all parameters declared with the bounds `<lower=.., upper=..>` except for `<lower=0, upper=1>` or `<lower=-1, upper=1>`.
 
-
-#### Implementation notes
-
-I was a little fuzzy on when bounds will be Ints vs. Reals. I ended up casting everything to float, which might backfire.
+In addition, a warning is generated when a parameter bound is found to have `upper - lower <= 0`.
 
 
 ## Limitations
 
-<a id="org0121f03"></a>
-
--   Handle array elements in dependency analysis
-    Indexed variables are not handled intelligently, so they're treated conservatively (erring toward no warnings)
--   Figure out how to persist data variable constraints into the MIR
-    When I can do this, I also catch more issues with discrete distributions
-    Data variables used as distribution arguments or variates are not currently checked against distribution specifications
--   Control flow dependent on parameters in nested functions
--   Sometimes it's impossible to know a variable's value, like a distribution argument, before the program is run
+<a id="orge7e533f"></a>
 
 
-# Dummy
+#### Constant values are sometimes uncomputable
+
+Pedantic mode attempts to evaluate expressions down to literal values so that they can be used to generate warnings.
+For example, in the code `normal(x, 1 - 2)`, the expression `1 - 2` will be evaluated to `-1`, which is not a valid variance argument so a warning is generated.
+However, this strategy is limited; it is often impossible to fully evaluate expressions in finite time.
+
+
+#### Container types
+
+Currently, indexed variables are not handled intelligently, so they are treated as monolithic variables.
+Each analysis treats indexed variables conservatively (erring toward generating fewer warnings).
+
+
+#### Data variables
+
+The declaration information for `data` variables is currently not considered, so using `data` as incompatible arguments to distributions may not generate the appropriate warnings.
+
+
+#### Control flow dependent on parameters in nested functions
+
+If a parameter is passed as an argument to a user-defined function within another user-defined function, and then some control flow depends on that argument, the appropriate warning will not be thrown.
+
+
 
